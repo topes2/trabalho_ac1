@@ -1,10 +1,10 @@
 .globl main
 .data 
 
-fileRGB:	.string "/home/topes1/Documents/ac/trabalho/exemplo1.rgb"  #a string é a localização do ficheiro
-fileGray:	.string "/home/topes1/Documents/ac/trabalho/image1.gray" #a string é a localização futura do ficheiro .gray
-buffer_rgb:	.space 75 #o espaco reserved para a leitura do ficheiro de rgb
-buffer_gray: 	.space 25 #espaço reservado para o ficheiro .gray
+fileRGB:	.string "/home/topes1/Documents/trabalho/exemplo1.rgb"  #a string é a localização do ficheiro
+fileGray:	.string "/home/topes1/Documents/trabalho/image1.gray" #a string é a localização futura do ficheiro .gray
+buffer_rgb:	.space 30000 #o espaco reserved para a leitura do ficheiro de rgb
+buffer_gray: 	.space 10000 #espaço reservado para o ficheiro .gray
 
 
 
@@ -24,7 +24,7 @@ main:
 
 	la a0,buffer_rgb
 	la a1, buffer_gray
-	li a2, 75
+	li a2, 30720
 	jal rgb_to_gray
 	
 #Fazemos load do adress do buffer do rgb
@@ -33,7 +33,7 @@ main:
 	
 	la a0, fileGray
 	la a1, buffer_gray
-	li a2, 25
+	li a2, 10000
 	jal write_gray_image
 	
 	j end
@@ -55,7 +55,7 @@ read_rgb_image: ######### read_rgb_image (a0 - string; a1 - pointer buffer )
 	
 	lw a1, 0(sp) #retomar o valor de a1 que foi guardado na stack
 	addi sp, sp, 4 #soltar o sp do sitio onde esta preso
-	li a2, 75 
+	li a2,30000 
 	ecall
 	
 	#fechar 
@@ -146,5 +146,10 @@ write_gray_image:
 	ecall
 
 	ret
+
+		
+sobel_horizontal:
+
+
 		
 end:
