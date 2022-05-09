@@ -2,11 +2,11 @@
 .data 
 
 fileRGB:	.string "/home/topes1/Documents/trabalho/exemplo1.rgb"  #a string é a localização do ficheiro
-fileGray:	.string "/home/topes1/Documents/trabalho/image1.gray" #a string é a localização futura do ficheiro .gray
+fileGray:	.string "/home/topes1/Documents/trabalho/graytrees.gray" #a string é a localização futura do ficheiro .gray
 buffer_rgb:	.space 30000 #o espaco reserved para a leitura do ficheiro de rgb
 buffer_gray: 	.space 10000 #espaço reservado para o ficheiro .gray
-
-
+buffer_gray_horizontal .space 10000
+buffer_gray_vertical .space 10000
 
 .text
 
@@ -24,7 +24,7 @@ main:
 
 	la a0,buffer_rgb
 	la a1, buffer_gray
-	li a2, 30720
+	li a2, 30000
 	jal rgb_to_gray
 	
 #Fazemos load do adress do buffer do rgb
@@ -35,6 +35,12 @@ main:
 	la a1, buffer_gray
 	li a2, 10000
 	jal write_gray_image
+	
+	
+	la a0,buffer_gray
+	la a1,buffer_gray_horizontal
+	jal convulation
+	
 	
 	j end
 
@@ -148,7 +154,19 @@ write_gray_image:
 	ret
 
 		
-sobel_horizontal:
+convolution: #recebe o buffer da imagem .gray para ser lido, o buffer da imagem .gray para ser aplicado
+
+	addi sp,sp,-4
+	sw ra,0(sp)
+	li t0,-1
+	li t1,0
+loopt0: addi t0,t0,1
+loopt1: addi t1,t1,1
+
+	#buffer da imagem a multiplicar sobre sobel[t0][t1]
+	blt t1,3,loopt1
+	blt t0,3,loopt0
+	
 
 
 		
