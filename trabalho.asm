@@ -3,15 +3,17 @@
 
 fileRGB:	.string "/home/topes1/Documents/trabalho/exemplo1.rgb"  #a string é a localização do ficheiro
 fileGray:	.string "/home/topes1/Documents/trabalho/graytrees.gray" #a string é a localização futura do ficheiro .gray
-FileFinal: .string "/home/topes/Documents/trabalho/lines.gray" # o ficheiro final do programa
+FileFinal: 	.string "/home/topes/Documents/trabalho/lines.gray" # o ficheiro final do programa
 buffer_rgb:	.space 30000 #o espaco reserved para a leitura do ficheiro de rgb
 buffer_gray: 	.space 10000 #espaço reservado para o ficheiro .gray
 buffer_gray_horizontal .space 10000 #espaço reservado para a aplicação de sobel horizontal
-buffer_gray_vertical .space 10000 #espaço reservado para a aplicação de sobel vertical
-buffer_final .space 10000 #espaço reservado para a forma final do ficheiro
-SobelH: 
-SobelV:
-
+buffer_gray_vertical 	.space 10000 #espaço reservado para a aplicação de sobel vertical
+buffer_final 	.space 10000 #espaço reservado para a forma final do ficheiro
+SobelH: 	.word -1,0,1,-2,0,2,-1,0,1
+SobelV:	
+array_somatorio: .space 36 #array com espaço para 9 int
+side_size: 	.word 100 # tamanho do lado, contante por isso fica em data
+one:		.word 1 # constante que pode ser necessaria 
 .text
 
 main:
@@ -179,29 +181,39 @@ write_gray_image: #### write_gray_image (a0 - string ,a1 - buffer gray, a2 - tam
 	ret	
 	
 
-convolution: #recebe o buffer da imagem .gray para ser lido, o buffer da imagem .gray para ser aplicado
+convolution: # convolution(a0 - imagem .gray, a1- operador de Sobel, a2 - buffer para nova matriz)
 
-	addi sp,sp,-8
-	sw ra,4(sp)
-	sw a0,0(sp)
-	li t0,-1
-	li t1,-1
+	lw s0, side_size
+	addi t0, s0, -1 #vai ser usado para parametro de comparação dos for's
 	
-loopt0: 
-	addi t0,t0,1
-loopt1: 
-	addi t1,t1,1
+	
+	li t1, 1 # i em array[i,j]		
+		 #inicializados em 1 porque a primira posiçao fora das margens é array[1,1]										
+																																												
+for_i: 
+	li t2, 1 # j em array[i,j]
+	
+for_j:		#{dentro do nosso loop	
+ 		
+ 		mul s1, s0, t1 # efeito de i no movimento do array
+ 		addi s1, s1, t2 #somamos o efeito de j no movimento do array
+ 		
+ 		li t4, 4 #para multiplicar o incidce de movimento pelos 4  bits
+ 		
+ 		mul s1, s1, t4 	#movimento a partir de a0 
+ 		add t3, a0, s1	#byte de byte em que vamos trabalho 
+ 		
+ 		
+ 		
+ 		
+ 
+ 		#}
+  		addi t2, t2, 1
+  		blt t2, t0, for_j
+	addi t1, t1, 1
+		
+    	blt t1, t0, for_i 
 
-	#\/\/\/\/\/\/\/\/TODO\/\/\/\/\/\/\/\/
-	#buffer da imagem a multiplicar sobre sobel[t0][t1]
-	blt t1,3,loopt1
-	blt t0,3,loopt0
-
-						
-												
-																		
-
-						
 final_sum:###final_sum(a0-buffer com o sobel horizontal;a1-buffer com o sobel vertical;a2-buffer final;a3-tamanho para criar) 
 	addi sp,sp,4
 	sw ra,0(sp)
@@ -241,8 +253,75 @@ final_sum:###final_sum(a0-buffer com o sobel horizontal;a1-buffer com o sobel ve
 	li a7, 57
 	ecall	
 							
-									
+								
 											
 																																																														
 end:
-						
+
+
+sobel: 	#nem sei bem dizer o que isto faz, mas isto faz o que isto faz  
+	#recebe um operador se sobel, e o bit que quermos trabalhar na matriz e retorna o resultado da convolution para o A[i,j]
+	# (a0- byte de trabalho,  a1- sobel )
+	
+	la a2, array_somatorio
+	#vamos percorrer os valores -1,0,1 para i e j 
+	li t6, 1
+	lw t5, side_size
+	
+	li t0, -1 # i de [i,j]
+for_i2:
+	li t1, -1 # j de [i,j]
+for_j2:	
+	#{dentro do nosso loop	
+	
+	mul t2 , t5, t0 # efeito de i no movimento do array
+ 	addi t2, t2, t1 #somamos o efeito de j no movimento do array
+ 		
+ 	li t4, 4 #para multiplicar o incidce de movimento pelos 4  bits
+ 		
+ 	mul t2, t2, t4 	#movimento a partir de a0 
+ 	add t2, a0, t2
+ 	
+ 	lw t2, 0(t2)
+ 	lw t3, 0(a1)
+	 			
+	mul t2, t2, t3
+	
+	sw t2, 0(a2)
+	
+	addi a2, a2, 1
+	addi a1, a1, 1
+	
+	#}
+	addi t1, t1, 1
+	ble t1, t6, for_j2
+	
+	addi t0, t0, 1
+	ble t0, t6, for_i2
+ 	
+ 	#fora do loop for
+	
+	la a0, array_somatorio
+	li a1, 9
+	jal soma_array
+	
+	
+soma_array: #(a0 - array, a1- sz)
+
+	li t0, 0
+	
+loop1: lw t1, 0(a0)
+	add t0, t0, t1
+	addi a1, a1, -1
+	addi a0, a0, 1
+	
+	bgtz a0, loopl
+	
+	mv a0, t0
+	ret
+
+	
+	
+	
+	
+	
