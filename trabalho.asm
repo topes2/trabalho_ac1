@@ -9,7 +9,7 @@ buffer_gray: 	.space 262144 #espaço reservado para o ficheiro .gray
 		.align 2
 buffer_gray_horizontal: .space 262144	#espaço reservado para a aplicação de sobel horizontal
 buffer_gray_vertical: 	.space 262144 	#espaço reservado para a aplicação de sobel vertical
-buffer_final: 	.space 10000 	#espaço reservado para a forma final do ficheiro
+buffer_final: 	.space 262144  	#espaço reservado para a forma final do ficheiro
 SobelH: 	.word -1,0,1,-2,0,2,-1,0,1
 SobelV:		.word -1,-2,-1,0,0,0,1,2,1
 array_somatorio: .space 36 #array com espaço para 9 int
@@ -75,10 +75,10 @@ main:
 	jal write_gray_image
 	
 	
-	#la a0 , buffer_gray
-	#la a1, SobelV
-	#la a2, buffer_gray_vertical
-	#jal convolution
+	la a0 , buffer_gray
+	la a1, SobelV
+	la a2, buffer_gray_vertical
+	jal convolution
 	
 ##############################################	
 #Função onde somamos ambas as matrizes com o sobel aplicado seja vertical
@@ -86,11 +86,11 @@ main:
 #
 ##############################################
 	
-	#la a0,buffer_gray_horizontal
-	#la a1,buffer_gray_vertical
-	#la a2,buffer_final
-	#li a3,260100
-	#jal final_sum
+	la a0,buffer_gray_horizontal
+	la a1,buffer_gray_vertical
+	la a2,buffer_final
+	li a3,260100
+	jal final_sum
 	
 	
 ##############################################
