@@ -259,12 +259,14 @@ for_j:		#{dentro do nosso loop
 	
 final_sum:###final_sum(a0-buffer com o sobel horizontal;a1-buffer com o sobel vertical;a2-buffer final;a3-tamanho para criar) 
 	
+	li t6, 255
 	
 loop4:	lbu t0, 0(a0) 
 	lbu t1, 0(a1) 
 	
 	add t2,t0,t1
 	srli t2, t2, 1
+	sub t2, t6, t2
 	sb t2, 0(a2)
 	
 	addi a0,a0,1
