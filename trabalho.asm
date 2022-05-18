@@ -1,21 +1,26 @@
 .globl main
 .data 
 
-fileRGB:	.string "/home/that_guy/Desktop/trabalho_ac1/lena/lena.rgb"  #a string é a localização do ficheiro
-fileGray:	.string "/home/that_guy/Desktop/trabalho_ac1/lena/teste.gray" #a string é a localização futura do ficheiro .gray
-FileFinal: 	.string "/home/that_guy/Desktop/trabalho_ac1/lena/lines.gray" # o ficheiro final do programa
+fileRGB:	.string "/home/topes1/Documents/trabalho/lena/lena.rgb"  #a string é a localização do ficheiro
+fileGray:	.string "/home/topes1/Documents/trabalho/lena/teste.gray" #a string é a localização futura do ficheiro .gray
+FileFinal: 	.string "/home/topes1/Documents/trabalho/lena/lines.gray" # o ficheiro final do programa
 buffer_rgb:	.space 786432 #o espaco reserved para a leitura do ficheiro de rgb
 buffer_gray: 	.space 262144 #espaço reservado para o ficheiro .gray
 		.align 2
+
 buffer_gray_horizontal: .space 262144	#espaço reservado para a aplicação de sobel horizontal
 buffer_gray_vertical: 	.space 262144 	#espaço reservado para a aplicação de sobel vertical
 buffer_final: 	.space 262144  	#espaço reservado para a forma final do ficheiro
+
+
 SobelH: 	.word -1,0,1,-2,0,2,-1,0,1
 SobelV:		.word -1,-2,-1,0,0,0,1,2,1
+
+
 array_somatorio: .space 36 #array com espaço para 9 int
 side_size: 	.word 512 # tamanho do lado, contante por isso fica em data
 
-filesobelV: 	.string "/home/that_guy/Desktop/trabalho_ac1/lena/sobel.gray"
+filesobelV: 	.string "/home/topes1/Documents/trabalho/lena/sobel.gray"
 
 .text		
 
@@ -112,18 +117,18 @@ read_rgb_image: ######### read_rgb_image (a0 - string; a1 - pointer buffer )
 	addi sp, sp, -4	
 	sw a1, 0(sp)	
 	
-	li a7, 1024         #
+	li a7, 1024           #
 	li a1, 0              #abrir para ler
 	ecall                 #
 		
-	lw a1, 0(sp)       #limpar a stack
-	addi sp, sp, 4     #
+	lw a1, 0(sp)         #limpar a stack
+	addi sp, sp, 4       #
 	
-	li a7, 63            	#ler 
-	ecall                 #
+	li a7, 63            #ler 
+	ecall                #
 	
 	li a7, 57           #fechar o ficheiro
-	ecall		      #
+	ecall		    #
 
 	ret	
 		
@@ -136,7 +141,7 @@ rgb_to_gray: ############ rgb_to_gray (a0 - buffer rgb, a1 - buffer gray, a2 - t
 	li t6, 100 #divisor
 	
 	
-loop: #operacao rgb para gray I = 0.30R + 0.59G + 0.11B.
+loop: ############### operacao rgb para gray I = 0.30R + 0.59G + 0.11B.
 
 	lbu t0, 0(a0) #Red
 	lbu t1, 1(a0) #Green
@@ -171,13 +176,13 @@ write_gray_image: #### write_gray_image (a0 - string ,a1 - buffer gray, a2 - tam
 	addi sp, sp, -4  
 	sw a1, 0(sp)     
 	
-	li a7, 1024    #
-	li a1, 1         #open to write
-	ecall 		   #
+	li a7, 1024         #
+	li a1, 1            #open to write
+	ecall 		    #
 	mv s0, a0
 	 
-	lw a1, 0(sp)	
-	addi sp, sp, 4     
+	lw a1, 0(sp)	    #limpar a stack
+	addi sp, sp, 4      #
 	
 	li a7, 64       	#write	
 	ecall 			#
@@ -186,7 +191,7 @@ write_gray_image: #### write_gray_image (a0 - string ,a1 - buffer gray, a2 - tam
 	
 	
 	li a7, 57		#close file
-	mv a0,s0
+	mv a0,s0		#
 	ecall			#
 
 	ret	
@@ -219,7 +224,7 @@ convolution: # convolution(a0 - imagem .gray, a1- operador de Sobel, a2 - buffer
 for_i: 
 	li s2, 1 # j em array[i,j]
 	
-for_j:		#{dentro do nosso loop	
+for_j:		#{  dentro do nosso loop	
  		
  		lw t6 , side_size
  		mul s3, t6, s1 	# efeito de i no movimento do array
@@ -374,9 +379,5 @@ R:	mv a0, t0
 	ret
 
 	
-	
-	
-	
-
 																																																														
 end:
