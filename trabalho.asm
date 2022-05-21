@@ -1,12 +1,12 @@
 .globl main
 .data 
 
-fileRGB:	.string "/home/topes1/Documents/trabalho/lena/lena.rgb"  #a string é a localização do ficheiro
-fileGray:	.string "/home/topes1/Documents/trabalho/lena/teste.gray" #a string é a localização futura do ficheiro .gray
-FileFinal: 	.string "/home/topes1/Documents/trabalho/lena/lines.gray" # o ficheiro final do programa
+fileRGB:	.string "/home/that_guy/Desktop/trabalho_ac1/lena/lena.rgb"  #a string é a localização do ficheiro
+fileGray:	.string "/home/that_guy/Desktop/trabalho_ac1/lena/teste.gray" #a string é a localização futura do ficheiro .gray
+FileFinal: 	.string "/home/that_guy/Desktop/trabalho_ac1/lena/lines_margem.gray" # o ficheiro final do programa
 buffer_rgb:	.space 786432 #o espaco reserved para a leitura do ficheiro de rgb
 buffer_gray: 	.space 262144 #espaço reservado para o ficheiro .gray
-		.align 2
+		
 
 buffer_gray_horizontal: .space 262144	#espaço reservado para a aplicação de sobel horizontal
 buffer_gray_vertical: 	.space 262144 	#espaço reservado para a aplicação de sobel vertical
@@ -19,8 +19,6 @@ SobelV:		.word -1,-2,-1,0,0,0,1,2,1
 
 array_somatorio: .space 36 #array com espaço para 9 int
 side_size: 	.word 512 # tamanho do lado, contante por isso fica em data
-
-filesobelV: 	.string "/home/topes1/Documents/trabalho/lena/sobel.gray"
 
 .text		
 
@@ -74,12 +72,6 @@ main:
 	la a2, buffer_gray_horizontal
 	jal convolution # convolution(a0 - imagem .gray, a1- operador de Sobel, a2 - buffer para nova matriz)
 	
-	la a0, filesobelV
-	la a1, buffer_gray_horizontal
-	li a2, 260100
-	jal write_gray_image
-	
-	
 	la a0 , buffer_gray
 	la a1, SobelV
 	la a2, buffer_gray_vertical
@@ -94,7 +86,7 @@ main:
 	la a0,buffer_gray_horizontal
 	la a1,buffer_gray_vertical
 	la a2,buffer_final
-	li a3,260100
+	li a3,262144
 	jal final_sum
 	
 	
@@ -218,13 +210,21 @@ convolution: # convolution(a0 - imagem .gray, a1- operador de Sobel, a2 - buffer
 	addi s7, s0, -1 #vai ser usado para parametro de comparação dos for's
 	
 	
-	li s1, 1 # i em array[i,j]		
+	li s1, 0 # i em array[i,j]		
 		 #inicializados em 1 porque a primira posiçao fora das margens é array[1,1]										
 																																													
 for_i: 
-	li s2, 1 # j em array[i,j]
+	li s2, 0 # j em array[i,j]
 	
 for_j:		#{  dentro do nosso loop	
+ 		
+ 		li a0, 124
+ 	
+ 	if:	beqz s1, condicao
+ 		beqz s2, condicao
+ 		beq s7, s1, condicao	#if( s1 == 0 || s1 == limite do array  || s2 == 0 || s2 == limite do array )
+ 		beq s7, s2, condicao	# se for marguem damos store a 124 por default
+ 		
  		
  		lw t6 , side_size
  		mul s3, t6, s1 	# efeito de i no movimento do array
@@ -236,18 +236,18 @@ for_j:		#{  dentro do nosso loop
  		mv a1, s5
  		
  		jal sobel
- 		
- 		sb a0, 0(s6)
- 		addi s6, s6, 1
- 		
+ 	
+condicao: 	sb a0, 0(s6)
+ 		addi s6, s6, 1		
+		
  		#}
  		
   		addi s2, s2, 1	  	# incrementação  de for_j	
-  		blt s2, s7, for_j 	# condição de for_j
+  		blt s2, s0, for_j 	# condição de for_j
   		
   		
 	addi s1, s1, 1		# incrementação  de for_i
-    	blt s1, s7, for_i 	# condição de for_i
+    	blt s1, s0, for_i 	# condição de for_i
     	
     	
     	lw s1, 0(sp)
@@ -264,7 +264,15 @@ for_j:		#{  dentro do nosso loop
 	
 final_sum:###final_sum(a0-buffer com o sobel horizontal;a1-buffer com o sobel vertical;a2-buffer final;a3-tamanho para criar) 
 	
+	
+	addi sp, sp, -8
+	sw s0, 0(sp)
+	sw s1, 4(sp)
+	
+	
 	li t6, 255
+	mv s1, a3
+	
 	
 loop4:	lbu t0, 0(a0) 
 	lbu t1, 0(a1) 
@@ -293,7 +301,7 @@ loop4:	lbu t0, 0(a0)
 	
 	li a7, 64
 	la a1,buffer_final 
-	li a2,260100
+	mv a2, s1
 	ecall 
 	
 	#close file
@@ -302,8 +310,12 @@ loop4:	lbu t0, 0(a0)
 	mv a0, s0
 	li a7, 57
 	ecall	
-							
-								
+	
+	
+	
+	lw s0, 0(sp)
+	lw s1, 4(sp)			
+	addi sp, sp, -8							
 											
 	ret
 
