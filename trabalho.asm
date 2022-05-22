@@ -83,10 +83,10 @@ main:
 #
 ##############################################
 	
-	la a0,buffer_gray_horizontal
-	la a1,buffer_gray_vertical
-	la a2,buffer_final
-	li a3,262144
+	la a0, buffer_gray_horizontal
+	la a1, buffer_gray_vertical
+	la a2, buffer_final
+	li a3, 262144
 	jal final_sum
 	
 	
@@ -95,32 +95,41 @@ main:
 #CPU's are just rocks we fooled into making math for us
 ##############################################
 	
-	
-	
 
-j end
+j End 
 
 
 #####################Funções#####################
 
 		
-read_rgb_image: ######### read_rgb_image (a0 - string; a1 - pointer buffer )
+read_rgb_image: ######### read_rgb_image (a0 - string; a1 - pointer buffer; a2 - tamanho da imagem a ler)
 
-	addi sp, sp, -4	
-	sw a1, 0(sp)	
-	
-	li a7, 1024           #
-	li a1, 0              #abrir para ler
-	ecall                 #
-		
-	lw a1, 0(sp)         #limpar a stack
-	addi sp, sp, 4       #
-	
-	li a7, 63            #ler 
+	addi sp, sp, -4
+	sw s0, 0(sp)
+
+	mv t0, a1	
+
+	li a7, 1024          #abrir para ler
+	li a1, 0             #
 	ecall                #
-	
+
+	mv s0, a0			 #guardar o file descriptor no s0		
+
+
+	li a7, 63            #ler 
+	# mv a0, s0			 # instrução redundante, o valor do a0 não foi alterado
+	mv a1, t0			 #	
+	# mv a2, a2		     # instrução redundante, já temos a informação nesseçaria no a2
+	ecall                #
+
+
 	li a7, 57           #fechar o ficheiro
-	ecall		    #
+	mv a0, s0			#
+	ecall		    	#
+
+
+	lw s0, 0(sp)
+	addi sp, sp, 4
 
 	ret	
 		
@@ -143,13 +152,11 @@ loop: ############### operacao rgb para gray I = 0.30R + 0.59G + 0.11B.
 	mul t1, t1, t4
 	mul t2, t2, t5
 
-	div t0, t0, t6
-	div t1, t1, t6
-	div t2, t2, t6
-	
 	add t0, t0, t1
 	add t0, t0, t2
 	
+	div t0, t0, t6
+
 	sb t0, 0(a1)
 	
 	#incrementações no final do loop
@@ -165,100 +172,112 @@ loop: ############### operacao rgb para gray I = 0.30R + 0.59G + 0.11B.
 																								
 write_gray_image: #### write_gray_image (a0 - string ,a1 - buffer gray, a2 - tamanho) 
 	
-	addi sp, sp, -4  
-	sw a1, 0(sp)     
+
+	addi sp, sp, -4
+	sw s0, 0(sp)
+
+
+
+	mv t0, a1
 	
 	li a7, 1024         #
 	li a1, 1            #open to write
-	ecall 		    #
-	mv s0, a0
+	ecall 		   		#
+
+	mv s0, a0			#guardar o file descriptor no t1
 	 
-	lw a1, 0(sp)	    #limpar a stack
-	addi sp, sp, 4      #
+
+	li a7, 64       	# write
+	# mv a0, s0			# instrução redundante, o valor do a0 não foi alterado
+	mv a1, t0			#
+	# mv a2, a2			# instrução redundante, já temos a informação nesseçaria no a2	
+	ecall 				#
 	
-	li a7, 64       	#write	
-	ecall 			#
-	
-	
-	
-	
-	li a7, 57		#close file
-	mv a0,s0		#
-	ecall			#
+
+	li a7, 57			#close file
+	mv a0, s0			#
+	ecall				#
+
+
+
+	lw s0, 0(sp)
+	addi sp, sp, 4
 
 	ret	
-	
+
 
 convolution: # convolution(a0 - imagem .gray, a1- operador de Sobel, a2 - buffer para nova matriz)
 
-	addi sp, sp, -32
-	sw s1, 0(sp)
-	sw s2, 4(sp)
-	sw s3, 8(sp)
-	sw s4, 12(sp)
-	sw s5, 16(sp)
-	sw s6, 20(sp)
-	sw s7, 24(sp)
-	sw ra, 28(sp)
+	addi sp, sp, -36
+	sw s0, 0(sp)
+	sw s1, 4(sp)
+	sw s2, 8(sp)
+	sw s3, 12(sp)
+	sw s4, 16(sp)
+	sw s5, 20(sp)
+	sw s6, 24(sp)
+	sw s7, 28(sp)
+	sw ra, 32(sp)
 	
+	lw s0, side_size
+	addi s7, s0, -1             #vai ser usado para parametro de comparação dos for's
 	
 	mv s4, a0
 	mv s5, a1
 	mv s6, a2
 	
-	lw s0, side_size
-	addi s7, s0, -1 #vai ser usado para parametro de comparação dos for's
 	
+	li s1, 0 # i em array[i,j]																																																							
+for_i:# for (i = 0 ; i < side_size ; i++)
 	
-	li s1, 0 # i em array[i,j]		
-		 #inicializados em 1 porque a primira posiçao fora das margens é array[1,1]										
-																																													
-for_i: 
-	li s2, 0 # j em array[i,j]
-	
-for_j:		#{  dentro do nosso loop	
+    
+    	li s2, 0 # j em array[i,j]
+	for_j:#for (j = 0 ; j < side_size ; j++){ 
  		
- 		li a0, 124
- 	
- 	if:	beqz s1, condicao
- 		beqz s2, condicao
- 		beq s7, s1, condicao	#if( s1 == 0 || s1 == limite do array  || s2 == 0 || s2 == limite do array )
- 		beq s7, s2, condicao	# se for marguem damos store a 124 por default
+	 		li a0, 124
+
+			#if( s1 == 0 || s1 == limite do array  || s2 == 0 || s2 == limite do array )
+	 		beqz s1, else       #
+	 		beqz s2, else       #
+	 		beq s7, s1, else	#
+ 			beq s7, s2, else	# se for marguem damos store a 124 por default
  		
  		
- 		lw t6 , side_size
- 		mul s3, t6, s1 	# efeito de i no movimento do array
- 		add s3, s3, s2 #somamos o efeito de j no movimento do array
+	 		mul s3, s0, s1 	    # efeito de i no movimento do array
+	 		add s3, s3, s2      #somamos o efeito de j no movimento do array
  		
- 		add t1, s4, s3	# byte em que vamos trabalhar
+ 			add t1, s4, s3	    #byte em que vamos trabalhar
  		
- 		mv a0, t1
- 		mv a1, s5
- 		
- 		jal sobel
- 	
-condicao: 	sb a0, 0(s6)
- 		addi s6, s6, 1		
-		
+	 		mv a0, t1           #
+	 		mv a1, s5           #
+	 		jal sobel           # chamada da função sobel
+
+	else:   sb a0, 0(s6)
+ 			addi s6, s6, 1		
+    
  		#}
  		
   		addi s2, s2, 1	  	# incrementação  de for_j	
   		blt s2, s0, for_j 	# condição de for_j
   		
-  		
+  	#}
 	addi s1, s1, 1		# incrementação  de for_i
-    	blt s1, s0, for_i 	# condição de for_i
+    blt s1, s0, for_i 	# condição de for_i
     	
-    	
-    	lw s1, 0(sp)
-	lw s2, 4(sp)
-	lw s3, 8(sp)
-	lw s4, 12(sp)
-	lw s5, 16(sp)
-	lw s6, 20(sp)
-	lw s7, 24(sp)
-	lw ra, 28(sp)
-	addi sp, sp, 32
+
+
+	
+		
+    lw s0, 0(sp)
+	lw s1, 4(sp)
+	lw s2, 8(sp)
+	lw s3, 12(sp)
+	lw s4, 16(sp)
+	lw s5, 20(sp)
+	lw s6, 24(sp)
+	lw s7, 28(sp)
+	lw ra, 32(sp)
+	addi sp, sp, 36
 
 	ret 
 	
@@ -310,8 +329,6 @@ loop4:	lbu t0, 0(a0)
 	mv a0, s0
 	li a7, 57
 	ecall	
-	
-	
 	
 	lw s0, 0(sp)
 	lw s1, 4(sp)			
@@ -392,4 +409,4 @@ R:	mv a0, t0
 
 	
 																																																														
-end:
+End:
