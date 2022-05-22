@@ -105,8 +105,18 @@ j End
 
 #####################Funções#####################
 
-		
-read_rgb_image: ######### read_rgb_image (a0 - string; a1 - pointer buffer; a2 - tamanho da imagem a ler)
+
+############################################
+# Função: read_rgb_image
+# Descrição: Esta função lê um ficheiro de formato .rgb para um buffer pré-alocado 
+# Argumentos:
+#	a0 - string com o caminho para o fichero 
+#	a1 - pointer para o buffer de destino
+#	a2 - tamanho do buffer 
+# Retorna: 
+#	Void
+############################################
+read_rgb_image: 
 
 	addi sp, sp, -4
 	sw s0, 0(sp)
@@ -137,8 +147,18 @@ read_rgb_image: ######### read_rgb_image (a0 - string; a1 - pointer buffer; a2 -
 
 	ret	
 		
-			
-rgb_to_gray: ############ rgb_to_gray (a0 - buffer rgb, a1 - buffer gray, a2 - tamanho)
+######################################
+# Função: rgb_to_gray
+# Descrição: converte uma imagem no formato .rgb para uma imagem .gray e coloca o resultado num array
+# Argumentos: 
+# 	a0 - pointer para buffer com a imagem RGB
+#	a1 - pointer para buffer de destino
+#	a2 - tamanho da imagem l*l (Ex: imagem 5x5 -> tamanho 25)	 
+# Retorna
+#	Void
+##############################################################
+
+rgb_to_gray:
 
 	li t3, 30 # Red ratio
 	li t4, 59 # Green ratio
@@ -173,8 +193,17 @@ loop0: ############### operacao rgb para gray I = 0.30R + 0.59G + 0.11B.
 	
 	ret				
 																																			
-																								
-write_gray_image: #### write_gray_image (a0 - string ,a1 - buffer gray, a2 - tamanho) 
+##################################
+# Função: write_gray_image
+# Descrição: escreve uma imagem em formato .gray num ficheiro
+# Argumentos: 
+# 	a0 - sting com o nome do ficheiro a criar 
+#	a1 - ponteiro para o buffer com a imagem
+#	a2 - tamnho do buffer
+# Retorna: 
+#	Void
+###################################
+write_gray_image: 
 	
 
 	addi sp, sp, -4
@@ -209,8 +238,17 @@ write_gray_image: #### write_gray_image (a0 - string ,a1 - buffer gray, a2 - tam
 
 	ret	
 
-
-convolution: # convolution(a0 - imagem .gray, a1- operador de Sobel, a2 - buffer para nova matriz)
+#############################################
+# Função: convolution 
+# Descrição: calcula a convolução de uma imagem A com um operador Sobel (matriz 3×3) e coloca o resultado numa matriz B
+# Argumentos: 
+#	a0 - pointer para buffer com imagem em formato GRAY
+#	a1 - array com operador de Sobel
+#	a2 - Buffer da matiz "B"
+# Retorna: 
+#	Void
+#################################################
+convolution: 
 
 	addi sp, sp, -36
 	sw s0, 0(sp)
@@ -272,22 +310,32 @@ for_i:# for (i = 0 ; i < side_size ; i++)
 
 	
 		
-    lw s0, 0(sp)
-	lw s1, 4(sp)
-	lw s2, 8(sp)
+    lw s0, 0(sp)	
+	lw s1, 4(sp)	
+	lw s2, 8(sp)	
 	lw s3, 12(sp)
 	lw s4, 16(sp)
-	lw s5, 20(sp)
-	lw s6, 24(sp)
-	lw s7, 28(sp)
-	lw ra, 32(sp)
-	addi sp, sp, 36
+	lw s5, 20(sp)		
+	lw s6, 24(sp)		
+	lw s7, 28(sp)	
+	lw ra, 32(sp)	
+	addi sp, sp, 36		
 
 	ret 
 	
 
-
-contour:###contour(a0-buffer com o sobel horizontal; a1-buffer com o sobel vertical; a2-buffer final; a3-tamanho para criar) 
+###############################################
+# Função: contour 
+# Descrição: Calcula a imagem final combinando as duas imagens convolvidas e coloca o resultado num buffer pré-alocado
+# Argumentos: 
+#	a0 - string com convuluçao a partir de Sobel horizontal
+#	a1 - string com convuluçao a partir de Sobel horizontal	
+# 	a2 - buffer para produto final
+#	a3 - tamanho da imagem a criar 
+# Retorna:
+#	Void
+###############################################
+contour:
 	
 		li t6, 255
 							# primeira parte: fazer as operações com as Imagens resultantes dos filtros sobel para obter a imagem Final 
@@ -310,9 +358,16 @@ loop1:	lbu t0, 0(a0) 		#
 
 
 
-
-sobel: 	#recebe um operador se sobel, e o bit que quermos trabalhar na matriz e retorna o resultado da convolution para o A[i,j]
-	# (a0- byte de trabalho,  a1- sobel )
+##################################################
+# Função: sobel
+# Descrição: Aplica a convunlução a partir de duas matrizes A e B para um unico bit
+# Argumentos: 
+#	a0 - byte em que vamos aplicar a convulução
+#	a1 - matriz de Sobel
+# Retorna:
+# 	a0 - valor da convuluçao
+###############################################
+sobel:
 	
 	addi sp, sp ,-4
 	sw ra, 0(sp)
@@ -360,21 +415,29 @@ for_j2:	#for( j = -1 ; j <= 1 ; j++){
 
 
 	#
-	# segunda parte: usamos a função soma_array para obter o valor absoluto do somatório do array_somatorio
+	# segunda parte: usamos a função modulo_soma para obter o valor absoluto do somatório do array_somatorio
 	#
 
 
 	la a0, array_somatorio
 	li a1, 9
-	jal soma_array
+	jal modulo_soma
 	
 	lw ra, 0(sp)
 	addi sp, sp, 4
 		
 	ret
 	
-
-soma_array: #(a0 - array, a1- sz)
+############################################
+# Função: modulo_soma
+# Descrição: retorna o módulo da soma de um array de inteiros
+# Argumentos: 
+#	a0 - array
+#	a1 - tamanho
+# Retorna:
+#	a0 - módulo da soma 
+###########################################
+modulo_soma: 
 
 	li t0, 0 
 	
