@@ -4,7 +4,7 @@
 fileRGB:	.string "/home/that_guy/Desktop/trabalho_ac1/lena/lena.rgb"  #a string é a localização do ficheiro
 fileGray:	.string "/home/that_guy/Desktop/trabalho_ac1/lena/teste.gray" #a string é a localização futura do ficheiro .gray
 FileFinal: 	.string "/home/that_guy/Desktop/trabalho_ac1/lena/lines_margem.gray" # o ficheiro final do programa
-buffer_rgb:	.space 786432 #o espaco reserved para a leitura do ficheiro de rgb
+buffer_rgb:	.space 786432 #o espaço reserved para a leitura do ficheiro de rgb
 buffer_gray: 	.space 262144 #espaço reservado para o ficheiro .gray
 		
 
@@ -51,8 +51,8 @@ main:
 	
 	
 ##############################################
-#função temporaria para fazer o ficheiro .gray para termos a certeza que esta
-# a funcionar
+#função que cria o ficheiro .gray sem qualquer outra
+#alteração ou modificação
 ##############################################	
 	
 
@@ -70,7 +70,7 @@ main:
 	la a0 , buffer_gray
 	la a1, SobelH
 	la a2, buffer_gray_horizontal
-	jal convolution # convolution(a0 - imagem .gray, a1- operador de Sobel, a2 - buffer para nova matriz)
+	jal convolution 
 	
 	la a0 , buffer_gray
 	la a1, SobelV
@@ -80,7 +80,6 @@ main:
 ##############################################	
 #Função onde somamos ambas as matrizes com o sobel aplicado seja vertical
 #ou horizontal e guardando no buffer_final
-#
 ##############################################
 	
 	la a0, buffer_gray_horizontal
@@ -197,9 +196,9 @@ loop0: ############### operacao rgb para gray I = 0.30R + 0.59G + 0.11B.
 # Função: write_gray_image
 # Descrição: escreve uma imagem em formato .gray num ficheiro
 # Argumentos: 
-# 	a0 - sting com o nome do ficheiro a criar 
+# 	a0 - string com o nome do ficheiro a criar 
 #	a1 - ponteiro para o buffer com a imagem
-#	a2 - tamnho do buffer
+#	a2 - tamanho do buffer
 # Retorna: 
 #	Void
 ###################################
@@ -244,7 +243,7 @@ write_gray_image:
 # Argumentos: 
 #	a0 - pointer para buffer com imagem em formato GRAY
 #	a1 - array com operador de Sobel
-#	a2 - Buffer da matiz "B"
+#	a2 - Buffer da matriz "B"
 # Retorna: 
 #	Void
 #################################################
@@ -328,8 +327,8 @@ for_i:# for (i = 0 ; i < side_size ; i++)
 # Função: contour 
 # Descrição: Calcula a imagem final combinando as duas imagens convolvidas e coloca o resultado num buffer pré-alocado
 # Argumentos: 
-#	a0 - string com convuluçao a partir de Sobel horizontal
-#	a1 - string com convuluçao a partir de Sobel horizontal	
+#	a0 - string com convolução a partir de Sobel horizontal
+#	a1 - string com convolução a partir de Sobel horizontal	
 # 	a2 - buffer para produto final
 #	a3 - tamanho da imagem a criar 
 # Retorna:
@@ -360,12 +359,12 @@ loop1:	lbu t0, 0(a0) 		#
 
 ##################################################
 # Função: sobel
-# Descrição: Aplica a convunlução a partir de duas matrizes A e B para um unico bit
+# Descrição: Aplica a convolução a partir de duas matrizes A e B para um unico bit
 # Argumentos: 
 #	a0 - byte em que vamos aplicar a convulução
 #	a1 - matriz de Sobel
 # Retorna:
-# 	a0 - valor da convuluçao
+# 	a0 - valor da convolução
 ###############################################
 sobel:
 	
