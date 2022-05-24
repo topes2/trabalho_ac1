@@ -3,7 +3,7 @@
 
 fileRGB:	.string "/home/that_guy/Desktop/trabalho_ac1/lena/lena.rgb"  #a string é a localização do ficheiro
 fileGray:	.string "/home/that_guy/Desktop/trabalho_ac1/lena/teste.gray" #a string é a localização futura do ficheiro .gray
-FileFinal: 	.string "/home/that_guy/Desktop/trabalho_ac1/lena/lines_margem.gray" # o ficheiro final do programa
+FileFinal: 	.string "/home/that_guy/Desktop/trabalho_ac1/lena/lines_margem2.gray" # o ficheiro final do programa
 buffer_rgb:	.space 786432 #o espaço reserved para a leitura do ficheiro de rgb
 buffer_gray: 	.space 262144 #espaço reservado para o ficheiro .gray
 		
@@ -19,6 +19,7 @@ SobelV:		.word -1,-2,-1,0,0,0,1,2,1
 
 array_somatorio: .space 36 #array com espaço para 9 int
 side_size: 	.word 512 # tamanho do lado, contante por isso fica em data
+matriz_A: .space 9 # array para 9 bytes
 
 .text		
 
@@ -275,25 +276,25 @@ for_i:# for (i = 0 ; i < side_size ; i++)
     	li s2, 0 # j em array[i,j]
 	for_j:#for (j = 0 ; j < side_size ; j++){ 
  		
-	 		li a0, 220
+	 		mul s3, s0, s1 	    # efeito de i no movimento do array 			# localizar o bit de trabalho
+	 		add s3, s3, s2      #somamos o efeito de j no movimento do array	#	
+			 																	#
+ 			add t1, s4, s3	    #byte em que vamos trabalhar					#
 
-								## if( s1 == 0 || s1 == limite do array  || s2 == 0 || s2 == limite do array )
-	 		beqz s1, else       #
-	 		beqz s2, else       #
-	 		beq s7, s1, else	#
- 			beq s7, s2, else	# se for marguem damos store a 124 por default
- 		
- 		
-	 		mul s3, s0, s1 	    # efeito de i no movimento do array
-	 		add s3, s3, s2      #somamos o efeito de j no movimento do array
- 		
- 			add t1, s4, s3	    #byte em que vamos trabalhar
- 		
-	 		mv a0, t1           #
+			mv a0, t1			#
+			la a1, matriz_A		#	
+			jal n_matriz		# crimanos uma matriz 3*3 com os valores que rodeam o bit de trabalho
+
+			mv a0, s0			  #	
+			mv a1, s1			  #	
+			la a2, matriz_A		  #	
+			jal identifca_margem # verifica se nos encontramos numa margem
+
+	 		la a0, matriz_A     #
 	 		mv a1, s5           #
 	 		jal sobel           # chamada da função sobel
 
-	else:   sb a0, 0(s6)
+		    sb a0, 0(s6)
  			addi s6, s6, 1		
     
  		#}
@@ -361,7 +362,7 @@ loop1:	lbu t0, 0(a0) 		#
 # Função: sobel
 # Descrição: Aplica a convolução a partir de duas matrizes A e B para um unico bit
 # Argumentos: 
-#	a0 - byte em que vamos aplicar a convulução
+#	a0 - Matriz 9*9 para fazer a convulition com o Sobel
 #	a1 - matriz de Sobel
 # Retorna:
 # 	a0 - valor da convolução
@@ -373,44 +374,31 @@ sobel:
 	
 	la a2, array_somatorio
 	lw t5, side_size
-	li t6, 1
 	
-
 	#
 	# primeira parte: aplocamos a convulução em relação ao bit que recebemos sem fazer o somatorio
 	#				  guarda apena cada um dos 9 valores num array 	
 
 
 
-		li t0, -1 # i de [i,j]
-for_i2: #for( i = -1 ; i <= 1 ; i++){
-
-		li t1, -1 # j de [i,j]
-for_j2:	#for( j = -1 ; j <= 1 ; j++){
+		li t0, 9 # i de [i,j]
+for_i2: #for( i = 9 ; i == 0 ; i--){
 		
-	
-		mul t2 , t5, t0 	# efeito de i no movimento do array
- 		add t2, t2, t1 		#somamos o efeito de j no movimento do array
- 		 
- 		add t2, a0, t2		#bite em que vamos trabalhar
- 	
- 		lbu t2, 0(t2)		#retiramos o valor do bit para t2 
+
+ 		lbu t2, 0(a0)		#retiramos o valor do bit para t2 
  		lw t3, 0(a1)		#retiramos o valor da matriz de Sobel para t3
 	 			
 		mul t2, t2, t3		
 	
 		sw t2, 0(a2)		#guardamos o valor no array_somatorio
-	
+
 		addi a2, a2, 4		#avançamos no array_somatorio
 		addi a1, a1, 4		#avançamos na matriz de Sobel
-	
+		addi a0, a0, 1      #avançamos na matriz_A
 
-		#}
-		addi t1, t1, 1
-		ble t1, t6, for_j2
-	#}
-	addi t0, t0, 1
-	ble t0, t6, for_i2
+		
+	addi t0, t0, -1
+	bgtz t0, for_i2
 
 
 	#
@@ -458,4 +446,92 @@ R:	mv a0, t0
 	ret
 
 																																																														
+#################################
+# Função: n_matriz
+# Descrição: cria uma matriz para ser trabalhada pela função sobel
+# 	a0 - byte em que vamos trabalhar 
+# 	a1 - novo array 
+# Retorna:
+#	void
+###############################################
+
+n_matriz:
+
+	####criar a nova matriz
+	lw t0, side_size
+
+	li t6, 1 # parametro de comparação
+
+		li t0, -1 # i de [i,j]
+for_i3: #for( i = -1 ; i <= 1 ; i++){
+
+		li t1, -1 # j de [i,j]
+for_j3:	#for( j = -1 ; j <= 1 ; j++){
+		
+
+		mul t2 , t5, t0 	# efeito de i no movimento do array
+ 		add t2, t2, t1 		#somamos o efeito de j no movimento do array
+ 		 
+ 		add t2, a0, t2		#bite em que vamos trabalhar
+ 	
+ 		lbu t2, 0(t2)		#retiramos o valor do bit para t2 
+ 		
+		sb t2, 0(a1)
+
+		addi a1, a1, 1
+
+		#}
+		addi t1, t1, 1
+		ble t1, t6, for_j3
+	#}
+	addi t0, t0, 1
+	ble t0, t6, for_i3
+
+
+	ret
+
+###############################
+# Função: identifca_margem
+# Descriçao: verifica se nos encontramos numa margem da imagem e altera a Matriz para calculo do sobel de acordo
+# Arguentos:
+# 	a0 - valor de i em Array[i,j]
+#   a1 - valor de j em Arrayp[i,j]
+#   a2 - Matriz para calculo do sobel, MatrizA
+# Retorna: 
+#	Void
+##################################################################
+
+identifca_margem:
+
+	lw t2, side_size
+	addi t2, t2, -1
+	lbu t0, 4(a2)
+
+India: 
+
+	bnez a0, India0
+		sb t0, 0(a2)	#|0|0|0|
+		sb t0, 1(a2)	#|x|x|x|
+		sb t0, 2(a2)	#|x|x|x|
+India0: 
+	bne a0, t2, Juliet 
+		sb t0, 6(a2)	#|x|x|x|
+		sb t0, 7(a2)	#|x|x|x|
+		sb t0, 8(a2)	#|0|0|0|
+	
+Juliet:
+	bnez a1, Juliet0
+		sb t0, 0(a2)	#|0|x|x|
+		sb t0, 3(a2)	#|0|x|x|
+		sb t0, 6(a2)	#|0|x|x|
+Juliet0:
+	bne a1, t2, Romeo
+		sb t0, 2(a2)	#|x|x|0|
+		sb t0, 5(a2)	#|x|x|0|
+		sb t0, 8(a2)	#|x|x|0|
+		
+
+Romeo: 
+		ret
+
 End:
