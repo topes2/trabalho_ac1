@@ -251,64 +251,59 @@ write_gray_image:
 
 convolution: 
 
-	addi sp, sp, -36
+	addi sp, sp, -24
 	sw s0, 0(sp)
 	sw s1, 4(sp)
 	sw s2, 8(sp)
 	sw s3, 12(sp)
 	sw s4, 16(sp)
-	sw s5, 20(sp)
-	sw s6, 24(sp)
-	sw s7, 28(sp)
-	sw ra, 32(sp)
+	sw ra, 20(sp)
 	
 	lw s0, side_size
 	mul s0, s0, s0		# tamanho em bits da imagem
 	 
 	
-	mv s4, a0
-	mv s5, a1
-	mv s6, a2
+	mv s2, a0
+	mv s3, a1
+	mv s4, a2
 	
-    	li s2, 0 # j em array[i,j]
+    	li s1, 0 # j em array[i,j]
 	for_j:#for (j = 0 ; j < tamanho; j++){ 
  		
 	 		
- 			add t1, s4, s2    #byte em que vamos trabalhar					
+ 			add t1, s2, s1    #byte em que vamos trabalhar					
 
 			mv a0, t1			#
 			la a1, matriz_A		#	
 			jal n_matriz		# crimanos uma matriz 3*3 com os valores que rodeam o bit de trabalho
 
-			mv a0, s2			  #	
+			mv a0, s1			  #	
 			la a1, matriz_A		  #	
 			jal identifca_margem  # verifica se nos encontramos numa margem
 
 	 		la a0, matriz_A     #
-	 		mv a1, s5           #
+	 		mv a1, s3           #
 	 		jal sobel           # chamada da função sobel
 
-		    sb a0, 0(s6)
- 			addi s6, s6, 1		
+		    sb a0, 0(s4)
+ 			addi s4, s4, 1		
     
  		#}
  		
-  		addi s2, s2, 1	  	# incrementação  de for_j	
-  		blt s2, s0, for_j 	# condição de for_j
+  		addi s1, s1, 1	  	# incrementação  de for_j	
+  		blt s1, s0, for_j 	# condição de for_j
   		
 		
-    lw s0, 0(sp)	
-	lw s1, 4(sp)	
-	lw s2, 8(sp)	
+    lw s0, 0(sp)
+	lw s1, 4(sp)
+	lw s2, 8(sp)
 	lw s3, 12(sp)
 	lw s4, 16(sp)
-	lw s5, 20(sp)		
-	lw s6, 24(sp)		
-	lw s7, 28(sp)	
-	lw ra, 32(sp)	
-	addi sp, sp, 36		
+	lw ra, 20(sp)	
+	addi sp, sp, 24
 
 	ret 
+
 
 ###############################################
 # Função: contour 
@@ -368,7 +363,7 @@ sobel:
 
 
 		li t0, 9 # i de [i,j]
-for_i2: #for( i = 9 ; i == 0 ; i--){
+for_i2: #for( i = 9 ; i > 0 ; i--){
 		
 
  		lbu t2, 0(a0)		#retiramos o valor do bit para t2 
