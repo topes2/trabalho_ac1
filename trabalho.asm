@@ -3,7 +3,7 @@
 
 fileRGB:	.string "/home/that_guy/Desktop/trabalho_ac1/lena/lena.rgb"  #a string é a localização do ficheiro
 fileGray:	.string "/home/that_guy/Desktop/trabalho_ac1/lena/teste.gray" #a string é a localização futura do ficheiro .gray
-FileFinal: 	.string "/home/that_guy/Desktop/trabalho_ac1/lena/lines_margem2.gray" # o ficheiro final do programa
+FileFinal: 	.string "/home/that_guy/Desktop/trabalho_ac1/lena/final.gray" # o ficheiro final do programa
 buffer_rgb:	.space 786432 #o espaço reserved para a leitura do ficheiro de rgb
 buffer_gray: 	.space 262144 #espaço reservado para o ficheiro .gray
 		
@@ -248,6 +248,7 @@ write_gray_image:
 # Retorna: 
 #	Void
 #################################################
+
 convolution: 
 
 	addi sp, sp, -36
@@ -262,33 +263,26 @@ convolution:
 	sw ra, 32(sp)
 	
 	lw s0, side_size
-	addi s7, s0, -1             #vai ser usado para parametro de comparação dos for's
+	mul s0, s0, s0		# tamanho em bits da imagem
+	 
 	
 	mv s4, a0
 	mv s5, a1
 	mv s6, a2
 	
-	
-	li s1, 0 # i em array[i,j]																																																							
-for_i:# for (i = 0 ; i < side_size ; i++)
-	
-    
     	li s2, 0 # j em array[i,j]
-	for_j:#for (j = 0 ; j < side_size ; j++){ 
+	for_j:#for (j = 0 ; j < tamanho; j++){ 
  		
-	 		mul s3, s0, s1 	    # efeito de i no movimento do array 			# localizar o bit de trabalho
-	 		add s3, s3, s2      #somamos o efeito de j no movimento do array	#	
-			 																	#
- 			add t1, s4, s3	    #byte em que vamos trabalhar					#
+	 		
+ 			add t1, s4, s2    #byte em que vamos trabalhar					
 
 			mv a0, t1			#
 			la a1, matriz_A		#	
 			jal n_matriz		# crimanos uma matriz 3*3 com os valores que rodeam o bit de trabalho
 
-			mv a0, s0			  #	
-			mv a1, s1			  #	
-			la a2, matriz_A		  #	
-			jal identifca_margem # verifica se nos encontramos numa margem
+			mv a0, s2			  #	
+			la a1, matriz_A		  #	
+			jal identifca_margem  # verifica se nos encontramos numa margem
 
 	 		la a0, matriz_A     #
 	 		mv a1, s5           #
@@ -302,13 +296,6 @@ for_i:# for (i = 0 ; i < side_size ; i++)
   		addi s2, s2, 1	  	# incrementação  de for_j	
   		blt s2, s0, for_j 	# condição de for_j
   		
-  	#}
-	addi s1, s1, 1		# incrementação  de for_i
-    blt s1, s0, for_i 	# condição de for_i
-    	
-
-
-	
 		
     lw s0, 0(sp)	
 	lw s1, 4(sp)	
@@ -322,7 +309,6 @@ for_i:# for (i = 0 ; i < side_size ; i++)
 	addi sp, sp, 36		
 
 	ret 
-	
 
 ###############################################
 # Função: contour 
@@ -490,45 +476,53 @@ for_j3:	#for( j = -1 ; j <= 1 ; j++){
 
 	ret
 
+
 ###############################
 # Função: identifca_margem
 # Descriçao: verifica se nos encontramos numa margem da imagem e altera a Matriz para calculo do sobel de acordo
 # Arguentos:
-# 	a0 - valor de i em Array[i,j]
-#   a1 - valor de j em Arrayp[i,j]
-#   a2 - Matriz para calculo do sobel, MatrizA
+# 	a0 - deslocamento em relação ao inicio do buffer
+#   a1 - Matriz para calculo do sobel, MatrizA
 # Retorna: 
 #	Void
 ##################################################################
 
 identifca_margem:
 
-	lw t2, side_size
-	addi t2, t2, -1
-	lbu t0, 4(a2)
+	lw t6, side_size
+	addi t6, t6, -1
+	lbu t2, 4(a1)
+
+	# vamos passar o valor absoluto do deslicamento para o deslocamento em matriz
+	# em imagem 512*512 um deslocamnto de 515 bits = A[1,3]
+
+	divu t0, a0, t6 # valor de i em A[i,j]
+
+	mul t1, t0, t6
+	sub t1, , a0, t1  # valor de j em A[i,j]
 
 India: 
 
-	bnez a0, India0
-		sb t0, 0(a2)	#|0|0|0|
-		sb t0, 1(a2)	#|x|x|x|
-		sb t0, 2(a2)	#|x|x|x|
+	bnez t0, India0
+		sb t2, 0(a1)	#|0|0|0|
+		sb t2, 1(a1)	#|x|x|x|
+		sb t2, 2(a1)	#|x|x|x|
 India0: 
-	bne a0, t2, Juliet 
-		sb t0, 6(a2)	#|x|x|x|
-		sb t0, 7(a2)	#|x|x|x|
-		sb t0, 8(a2)	#|0|0|0|
+	bne t0, t6, Juliet 
+		sb t2, 6(a1)	#|x|x|x|
+		sb t2, 7(a1)	#|x|x|x|
+		sb t2, 8(a1)	#|0|0|0|
 	
 Juliet:
-	bnez a1, Juliet0
-		sb t0, 0(a2)	#|0|x|x|
-		sb t0, 3(a2)	#|0|x|x|
-		sb t0, 6(a2)	#|0|x|x|
-Juliet0:
-	bne a1, t2, Romeo
-		sb t0, 2(a2)	#|x|x|0|
-		sb t0, 5(a2)	#|x|x|0|
-		sb t0, 8(a2)	#|x|x|0|
+	bnez t1, Juliet2
+		sb t2, 0(a1)	#|0|x|x|
+		sb t2, 3(a1)	#|0|x|x|
+		sb t2, 6(a1)	#|0|x|x|
+Juliet2:
+	bne t1, t6, Romeo
+		sb t2, 2(a1)	#|x|x|0|
+		sb t2, 5(a1)	#|x|x|0|
+		sb t2, 8(a1)	#|x|x|0|
 		
 
 Romeo: 

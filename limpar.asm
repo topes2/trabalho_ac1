@@ -1,41 +1,50 @@
+
 ###############################
 # Função: identifca_margem
 # Descriçao: verifica se nos encontramos numa margem da imagem e altera a Matriz para calculo do sobel de acordo
 # Arguentos:
-# 	a0 - valor de i em Array[i,j]
-#   a1 - valor de j em Arrayp[i,j]
-#   a2 - Matriz para calculo do sobel, MatrizA
+# 	a0 - deslocamento em relação ao inicio do buffer
+#   a1 - Matriz para calculo do sobel, MatrizA
 # Retorna: 
 #	Void
 ##################################################################
 
 identifca_margem:
 
-	lw t2, side_size
-	li t0, 0
+	lw t6, side_size
+	addi t6, t6, -1
+	lbu t2, 4(a1)
+
+	# vamos passar o valor absoluto do deslicamento para o deslocamento em matriz
+	# em imagem 512*512 um deslocamnto de 515 bits = A[1,3]
+
+	divu t0, a0, t6 # valor de i em A[i,j]
+
+	mul t1, t0, t6
+	sub t1, , a0, t1  # valor de j em A[i,j]
 
 India: 
 
-	bnez a0, India0
-		sb t0, 0(a2)	#|0|0|0|
-		sb t0, 1(a2)	#|x|x|x|
-		sb t0, 2(a2)	#|x|x|x|
+	bnez t0, India0
+		sb t2, 0(a1)	#|0|0|0|
+		sb t2, 1(a1)	#|x|x|x|
+		sb t2, 2(a1)	#|x|x|x|
 India0: 
-	bne a0, t2, Juliet 
-		sb t0, 6(a2)	#|x|x|x|
-		sb t0, 7(a2)	#|x|x|x|
-		sb t0, 8(a2)	#|0|0|0|
+	bne t0, t6, Juliet 
+		sb t2, 6(a1)	#|x|x|x|
+		sb t2, 7(a1)	#|x|x|x|
+		sb t2, 8(a1)	#|0|0|0|
 	
 Juliet:
-	bnez a1, Juliet0
-		sb t0, 0(a2)	#|0|x|x|
-		sb t0, 3(a2)	#|0|x|x|
-		sb t0, 6(a2)	#|0|x|x|
-Juliet0:
-	bne a1, t2, Romeo
-		sb t0, 2(a2)	#|x|x|0|
-		sb t0, 5(a2)	#|x|x|0|
-		sb t0, 8(a2)	#|x|x|0|
+	bnez t1, Juliet2
+		sb t2, 0(a1)	#|0|x|x|
+		sb t2, 3(a1)	#|0|x|x|
+		sb t2, 6(a1)	#|0|x|x|
+Juliet2:
+	bne t1, t6, Romeo
+		sb t2, 2(a1)	#|x|x|0|
+		sb t2, 5(a1)	#|x|x|0|
+		sb t2, 8(a1)	#|x|x|0|
 		
 
 Romeo: 
